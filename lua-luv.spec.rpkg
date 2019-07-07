@@ -53,22 +53,12 @@ rm -rf %{lua_compat_builddir}
 cp -a . %{lua_compat_builddir}
 
 %build
-%cmake -Bbuild -DBUILD_MODULE=ON \
-               -DBUILD_SHARED_LIBS=OFF \
-               -DWITH_SHARED_LIBUV=ON \
-               -DLUA_BUILD_TYPE=System \
-               -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7 \
-               -DWITH_LUA_ENGINE=Lua
-%make_build -C build
+%cmake -Bbuild -DBUILD_MODULE=ON -DBUILD_SHARED_LIBS=OFF -DWITH_SHARED_LIBUV=ON -DWITH_LUA_ENGINE=Lua -DLUA_BUILD_TYPE=System -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7
+cmake --build build --config Debug
 
 pushd %{lua_compat_builddir}
-%cmake -Bbuild -DBUILD_MODULE=ON \
-               -DBUILD_SHARED_LIBS=OFF \
-               -DWITH_SHARED_LIBUV=ON \
-               -DLUA_BUILD_TYPE=System \
-               -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7 \
-               -DWITH_LUA_ENGINE=LuaJIT
-%make_build -C build
+%cmake -Bbuild -DBUILD_MODULE=ON -DBUILD_SHARED_LIBS=OFF -DWITH_SHARED_LIBUV=ON -DWITH_LUA_ENGINE=LuaJIT -DLUA_BUILD_TYPE=System -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7
+cmake --build build --config Debug
 popd
 
 %install
