@@ -7,6 +7,8 @@
 %global lua_compat_pkgdir %{_datadir}/lua/%{lua_compat_version}
 %global lua_compat_builddir %{_builddir}/compat-lua-%{name}-%{version}-%{release}
 
+%global lua_pkg_name luv
+
 Name:           {{{git_name name="lua-luv"}}}
 Version:        {{{git_version lead="$(git tag | sed 's/^v//;s/-/./g' | sort -Vr | head -n1)"}}}
 Release:        {{{git_revision 1}}}%{?dist}
@@ -31,9 +33,9 @@ Requires:       lua >= %{lua_version}
 %description
 %{summary} %{lua_version}
 
-%package -n compat-%{name}
+%package -n lua%{lua_compat_version}-%{lua_pkg_name}
 Summary:        %{summary} %{lua_compat_version}
-Group:          Development/Libraries
+Provides:       compat-%{name}
 BuildRequires:  compat-lua-devel >= %{lua_compat_version}
 %if 0%{?fedora} || 0%{?rhel} >= 7
 Requires:       lua(abi) = %{lua_compat_version}
@@ -41,7 +43,7 @@ Requires:       lua(abi) = %{lua_compat_version}
 Requires:       lua >= %{lua_compat_version}
 %endif
 
-%description -n compat-%{name}
+%description -n lua%{lua_compat_version}-%{lua_pkg_name}
 %{summary} %{lua_compat_version}
 
 %prep
@@ -57,7 +59,7 @@ cp -a . %{lua_compat_builddir}
                -DLUA_BUILD_TYPE=System \
                -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7 \
                -DWITH_LUA_ENGINE=Lua
-cmake --build build --config Debug
+%make_build -C build
 
 pushd %{lua_compat_builddir}
 %cmake -Bbuild -DBUILD_MODULE=ON \
@@ -66,7 +68,7 @@ pushd %{lua_compat_builddir}
                -DLUA_BUILD_TYPE=System \
                -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7 \
                -DWITH_LUA_ENGINE=LuaJIT
-cmake --build build --config Debug
+%make_build -C build
 popd
 
 %install
@@ -86,7 +88,7 @@ popd
 %doc README.md
 %{lua_libdir}/*
 
-%files -n compat-%{name}
+%files -n lua%{lua_compat_version}-%{lua_pkg_name}
 %{lua_compat_libdir}/*
 
 %changelog
