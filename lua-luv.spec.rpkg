@@ -1,0 +1,94 @@
+%global lua_version 5.3
+%global lua_libdir %{_libdir}/lua/%{lua_version}
+%global lua_pkgdir %{_datadir}/lua/%{lua_version}
+
+%global lua_compat_version 5.1
+%global lua_compat_libdir %{_libdir}/lua/%{lua_compat_version}
+%global lua_compat_pkgdir %{_datadir}/lua/%{lua_compat_version}
+%global lua_compat_builddir %{_builddir}/compat-lua-%{name}-%{version}-%{release}
+
+Name:           {{{git_name name="lua-luv"}}}
+Version:        {{{git_version lead="$(git tag | sed 's/^v//;s/-/./g' | sort -Vr | head -n1)"}}}
+Release:        {{{git_revision 1}}}%{?dist}
+Summary:        Bare libuv bindings for Lua
+
+License:        Apache 2.0
+URL:            https://github.com/luvit/luv
+Source0:        {{{git_pack}}}
+
+BuildRequires:  cmake
+BuildRequires:  gcc
+BuildRequires:  libuv-devel
+Requires:       libuv
+
+BuildRequires:  lua-devel >= %{lua_version}
+%if 0%{?fedora} || 0%{?rhel} >= 7
+Requires:       lua(abi) = %{lua_version}
+%else
+Requires:       lua >= %{lua_version}
+%endif
+
+%description
+%{summary} %{lua_version}
+
+%package -n compat-%{name}
+Summary:        %{summary} %{lua_compat_version}
+Group:          Development/Libraries
+BuildRequires:  compat-lua-devel >= %{lua_compat_version}
+%if 0%{?fedora} || 0%{?rhel} >= 7
+Requires:       lua(abi) = %{lua_compat_version}
+%else
+Requires:       lua >= %{lua_compat_version}
+%endif
+
+%description -n compat-%{name}
+%{summary} %{lua_compat_version}
+
+%prep
+{{{git_setup_macro}}}
+
+rm -rf %{lua_compat_builddir}
+cp -a . %{lua_compat_builddir}
+
+%build
+%cmake -Bbuild -DBUILD_MODULE=ON \
+               -DBUILD_SHARED_LIBS=OFF \
+               -DWITH_SHARED_LIBUV=ON \
+               -DLUA_BUILD_TYPE=System \
+               -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7 \
+               -DWITH_LUA_ENGINE=Lua
+cmake --build build --config Debug
+
+pushd %{lua_compat_builddir}
+%cmake -Bbuild -DBUILD_MODULE=ON \
+               -DBUILD_SHARED_LIBS=OFF \
+               -DWITH_SHARED_LIBUV=ON \
+               -DLUA_BUILD_TYPE=System \
+               -DLUA_COMPAT53_DIR=deps/lua-compat-5.3-0.7 \
+               -DWITH_LUA_ENGINE=LuaJIT
+cmake --build build --config Debug
+popd
+
+%install
+%{__rm} -rf %{buildroot}
+
+%{__mkdir_p} %{buildroot}%{lua_libdir}
+%{__install} -p build/luv.so %{buildroot}%{lua_libdir}/luv.so.%{version}
+%{__ln_s} luv.so.%{version} %{buildroot}%{lua_libdir}/luv.so
+
+pushd %{lua_compat_builddir}
+%{__mkdir_p} %{buildroot}%{lua_compat_libdir}
+%{__install} -p build/luv.so %{buildroot}%{lua_compat_libdir}/luv.so.%{version}
+%{__ln_s} luv.so.%{version} %{buildroot}%{lua_compat_libdir}/luv.so
+popd
+
+%files
+%doc README.md
+%{lua_libdir}/*
+
+%files -n compat-%{name}
+%{lua_compat_libdir}/*
+
+%changelog
+* {{{git_changelog_date}}} Aron Griffis <aron@scampersand.com> - {{{git_changelog_version}}}
+- Nightly build from git master
